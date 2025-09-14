@@ -5,7 +5,7 @@ mod cert;
 
 use std::env;
 use std::fs;
-use cert::{WipeCertificate, generate_keypair, sign_certificate, verify_certificate};
+use cert::{WipeCertificate, generate_keypair, sign_certificate, verify_certificate, export_pdf};
 fn main() {
     // 1. Detect the OS
     let os_name = os_detect::detect_os();
@@ -36,9 +36,16 @@ fn main() {
     let cert = WipeCertificate::new(&os_name, "Null overwriting");
     let signed = sign_certificate(cert, &keypair);
 
-    let filename = format!("wipe_cert_{}.json", signed.certificate_id);
-    let json = serde_json::to_string_pretty(&signed).unwrap();
-    fs::write(&filename, json).unwrap();
+    let json_filename = format!("wipe_cert_{}.json", signed.certificate_id);
+    let pdf_filename = format!("wipe_cert_{}.pdf", signed.certificate_id);
 
-    println!("✅ Certificate created: {}", filename);
+    // Save JSON
+    let json = serde_json::to_string_pretty(&signed).unwrap();
+    fs::write(&json_filename, json).unwrap();
+
+    // Save PDF
+    export_pdf(&signed, &pdf_filename);
+
+
+    println!("✅ Certificates created:\n- {}\n- {}", json_filename, pdf_filename);
 }

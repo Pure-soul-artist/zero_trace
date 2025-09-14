@@ -1,0 +1,1 @@
+D:\Code\rust\zero_trace\target\debug\zero_trace.exe: D:\Code\rust\zero_trace\src\cert.rs D:\Code\rust\zero_trace\src\drive_detect.rs D:\Code\rust\zero_trace\src\main.rs D:\Code\rust\zero_trace\src\os_detect.rs D:\Code\rust\zero_trace\src\wipe.rs

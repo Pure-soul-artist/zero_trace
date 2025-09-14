@@ -4,6 +4,9 @@ use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use chrono::Utc;
 use base64::{engine::general_purpose, Engine as _};
+use printpdf::*;
+use std::fs::File;
+use std::io::BufWriter;
 
 /// Wipe certificate structure
 #[derive(Serialize, Deserialize, Debug)]
@@ -76,4 +79,46 @@ pub fn verify_certificate(cert: &WipeCertificate) -> bool {
     let bytes = serde_json::to_vec(&value).unwrap();
 
     public_key.verify(&bytes, &sig).is_ok()
+}
+
+// Export PDF certificate (human-readable)
+pub fn export_pdf(cert: &WipeCertificate, filename: &str) {
+    let (doc, page1, layer1) =
+        PdfDocument::new("ZeroTrace Wipe Certificate", Mm(210.0), Mm(297.0), "Layer 1");
+    let current_layer = doc.get_page(page1).get_layer(layer1);
+
+    // Simple font
+    let font = doc.add_builtin_font(BuiltinFont::Helvetica).unwrap();
+
+    let text = format!(
+        "ZeroTrace Wipe Certificate\n\n\
+        Certificate ID: {}\n\
+        Device: {}\n\
+        Method: {}\n\
+        Timestamp: {}\n\
+        Status: {}\n\n\
+        Public Key: {}\n\n\
+        Signature: {}\n",
+        cert.certificate_id,
+        cert.device,
+        cert.method,
+        cert.timestamp,
+        cert.status,
+        cert.public_key,
+        cert.signature.clone().unwrap_or("None".to_string())
+    );
+
+    // Starting coordinates
+    let start_x = Mm(20.0);
+    let mut y: f32 = 270.0;   // start near the top of the page
+    let line_height: f32 = 12.0 * 1.5; // 1.5x font size for spacing
+
+    // Write each line separately
+    for line in text.lines() {
+        current_layer.use_text(line, 12.0, start_x, Mm(y), &font);
+        y -= line_height; // move down for the next line
+    }
+
+    let file = File::create(filename).unwrap();
+    doc.save(&mut BufWriter::new(file)).unwrap();
 }
